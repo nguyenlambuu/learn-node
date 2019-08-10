@@ -23,6 +23,14 @@ exports.getAllTours = async (req, res) => {
 			query = query.sort(sortBy);
 		}
 
+		// Field limit => Bandwidth
+		if (req.query.fields) {
+			const fields = req.query.fields.split(',').join(' ');
+			query = query.select(fields);
+		} else {
+			query = query.select('-__v'); // Minus means exclude the __v field
+		}
+
 		// EXECUTE QUERY
 		const tours = await query;
 
