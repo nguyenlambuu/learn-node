@@ -31,6 +31,18 @@ exports.getAllTours = async (req, res) => {
 			query = query.select('-__v'); // Minus means exclude the __v field
 		}
 
+		// Pagination
+		// { page: '2', limit: '10' } => 1-10 belongs to page 1, 11-20 belongs to page 2
+		const page = req.query.page * 1 || 1; // Default is 1
+		const limit = req.query.limit * 1 || 50; // Default are 50
+		const skip = (page - 1) * limit; // Page 1 have 50 tours => Page 3 means skip 100 tours, and start at tour 101
+		query = query.skip(skip).limit(limit);
+
+		if (req.query.page) {
+			const numberOfTours = await Tour.countDocuments();
+			if (skip >= numberOfTours) throw new Error('This page does not exist');
+		}
+
 		// EXECUTE QUERY
 		const tours = await query;
 
