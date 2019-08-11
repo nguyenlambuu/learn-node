@@ -94,3 +94,44 @@ exports.deleteTour = async (req, res) => {
 		});
 	}
 };
+
+/**
+ * @description Find tours which have ratingsAverage greater than equal 4.5
+ * Group by difficulty,
+ * Sort by * minPrice desc,
+ * Excludes difficulty is EASY
+ * @param req
+ * @param res
+ * @returns JSON
+ */
+exports.getTourStats = async (req, res) => {
+	try {
+		const stats = await Tour.aggregate([
+			{ $match: { ratingsAverage: { $gte: 4.5 } } }, // Matching
+			{
+				$group: {
+					// _id: '$difficulty',
+					_id: { $toUpper: '$difficulty' }, // Group by
+					numberOfTours: { $sum: 1 },
+					numOfRatings: { $sum: '$ratingsQuantity' },
+					avgRating: { $avg: '$ratingsAverage' },
+					avgPrice: { $avg: '$price' },
+					maxPrice: { $max: '$price' },
+					minPrice: { $min: '$price' }
+				}
+			},
+			{
+				$sort: { minPrice: -1 } // Sorting 1 for ASC, -1 for DESC
+			},
+			{ $match: { _id: { $ne: 'EASY' } } } // Can use match multiple times
+		]);
+		res
+			.status(200)
+			.json({ status: 'success', results: stats.length, data: stats });
+	} catch (error) {
+		res.status(400).json({
+			status: 'fail',
+			message: error
+		});
+	}
+};
