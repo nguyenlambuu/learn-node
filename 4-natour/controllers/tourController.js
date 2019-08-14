@@ -122,8 +122,8 @@ exports.getTourStats = async (req, res) => {
 			},
 			{
 				$sort: { minPrice: -1 } // Sorting 1 for ASC, -1 for DESC
-			},
-			{ $match: { _id: { $ne: 'EASY' } } } // Can use match multiple times
+			}
+			// { $match: { _id: { $ne: 'EASY' } } } // Can use match multiple times
 		]);
 		res
 			.status(200)

@@ -118,8 +118,23 @@ tourSchema.pre(/^find/, function(next) {
 });
 
 tourSchema.post(/^find/, function(document, next) {
-	console.log(`Query took ${Date.now() - this.start} miliseconds!`);
-	console.log(document);
+	// console.log(`Query took ${Date.now() - this.start} miliseconds!`);
+	// console.log(document);
+	next();
+});
+
+/**
+ * @description AGGREGATION MIDDLEWARE: Processing a aggregate
+ * @function pre() will run before an actual event.
+ *  * @function post() will run after document executed.
+ * That event in this case is the @event aggregate.
+ * We have a "secret tour", and it only show with VIP member
+ * It means find all tour which secretTour not secret
+ * @this aggregate
+ */
+tourSchema.pre('aggregate', function(next) {
+	this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+	// console.log(this);
 	next();
 });
 
