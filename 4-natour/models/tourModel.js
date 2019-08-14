@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
 
 const tourSchema = new mongoose.Schema(
 	{
@@ -7,6 +8,7 @@ const tourSchema = new mongoose.Schema(
 			required: [true, 'A tour must have a name'],
 			unique: true
 		},
+		slug: String,
 		duration: {
 			type: Number,
 			required: [true]
@@ -50,7 +52,11 @@ const tourSchema = new mongoose.Schema(
 			type: Date,
 			default: Date.now()
 		},
-		startDates: [Date]
+		startDates: [Date],
+		secretTour: {
+			type: Boolean,
+			default: false
+		}
 	},
 	{
 		toJSON: { virtuals: true },
@@ -62,6 +68,33 @@ const tourSchema = new mongoose.Schema(
 tourSchema.virtual('durationWeeks').get(function() {
 	return this.duration / 7;
 });
+
+// 4️⃣types middlewares in mongoDB are DOCUMENT, QUERY, AGGREGATE and MODEL
+
+/**
+ * @description DOCUMENT MIDDLEWARE: Processing a document
+ * Just only run before .save() and .create()
+ * @function pre() will run before an actual event.
+ * @function post() will run after an actual event.
+ * That event in this case is the @event save.
+ * Or we can call save hook, or save middleware
+ * @this document
+ */
+tourSchema.pre('save', function(next) {
+	// console.log(this); // 'this' keyword point to document
+	this.slug = slugify(this.name, { lower: true });
+	next();
+});
+
+// tourSchema.pre('save', function(next) {
+// 	console.log('Will save document');
+// 	next();
+// });
+
+// tourSchema.post('save', function(document, next) {
+// 	console.log(document);
+// 	next();
+// });
 
 const Tour = mongoose.model('Tour', tourSchema);
 
