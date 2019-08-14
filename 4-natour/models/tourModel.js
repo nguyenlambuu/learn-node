@@ -75,7 +75,7 @@ tourSchema.virtual('durationWeeks').get(function() {
  * @description DOCUMENT MIDDLEWARE: Processing a document
  * Just only run before .save() and .create()
  * @function pre() will run before an actual event.
- * @function post() will run after an actual event.
+ * @function post() will run after document executed.
  * That event in this case is the @event save.
  * Or we can call save hook, or save middleware
  * @this document
@@ -95,6 +95,33 @@ tourSchema.pre('save', function(next) {
 // 	console.log(document);
 // 	next();
 // });
+
+/**
+ * @description QUERY MIDDLEWARE: Processing a query
+ * @function pre() will run before an actual event.
+ *  * @function post() will run after document executed.
+ * That event in this case is the @event find.
+ * We have a "secret tour", and it only show with VIP member
+ * It means find all tour which secretTour not secret
+ * @this query
+ */
+// It works only find,
+// but not work for findOne, findOneAndDelete, findOneAndUpdate...
+// tourSchema.pre('find', function(next) {
+// Match any event start with 'find...'
+tourSchema.pre(/^find/, function(next) {
+	// console.log(this); // 'this' keyword point to query
+	this.find({ secretTour: { $ne: true } });
+
+	this.start = Date.now();
+	next();
+});
+
+tourSchema.post(/^find/, function(document, next) {
+	console.log(`Query took ${Date.now() - this.start} miliseconds!`);
+	console.log(document);
+	next();
+});
 
 const Tour = mongoose.model('Tour', tourSchema);
 
