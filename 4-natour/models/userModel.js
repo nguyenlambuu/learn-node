@@ -60,6 +60,15 @@ userSchema.methods.correctPassword = async function(
 	return await bcrypt.compare(candidatePassword, userPassword);
 };
 
+userSchema.pre('save', function(next) {
+	if (!this.isModified('password') || this.isNew) return next();
+
+	// Saving to database maybe a little bit slower than issuing the JWT
+	// Because changed password after timestamp
+	this.passwordChangedAt = Date.now() - 1000; // Trick -> make sure JWT token alway created after the password has been changed
+	next();
+});
+
 // Check password was changed after timestamp
 userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
 	if (this.passwordChangedAt) {
