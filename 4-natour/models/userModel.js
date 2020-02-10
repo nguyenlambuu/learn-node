@@ -37,9 +37,15 @@ const userSchema = new mongoose.Schema({
 	},
 	passwordChangedAt: Date,
 	passwordResetToken: String,
-	passwordResetExpires: Date
+	passwordResetExpires: Date,
+	active: {
+		type: Boolean,
+		default: true,
+		select: false // Don't show
+	}
 });
 
+// Encrypt new password when inserted into database.
 userSchema.pre('save', async function(next) {
 	// Only run this function if password was actual modified.
 	if (!this.isModified('password')) return next();
@@ -52,6 +58,13 @@ userSchema.pre('save', async function(next) {
 	next();
 });
 
+// Find all user who is contains active not equal false (not deleted).
+userSchema.pre(/^find/, function(next) {
+	// 'this' points to the current query
+	this.find({ active: { $ne: false } });
+	next();
+});
+
 // Compare password which user input with encrypted password.
 userSchema.methods.correctPassword = async function(
 	candidatePassword,
@@ -60,6 +73,7 @@ userSchema.methods.correctPassword = async function(
 	return await bcrypt.compare(candidatePassword, userPassword);
 };
 
+// Change password
 userSchema.pre('save', function(next) {
 	if (!this.isModified('password') || this.isNew) return next();
 
