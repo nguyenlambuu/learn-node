@@ -20,6 +20,7 @@ fs.readFile('test-file.txt', 'utf-8', () => {
 	crypto.pbkdf2Sync('password', 'salt', 100000, 1024, 'sha512');
 	console.log(Date.now() - start, 'Password encrypted');
 
+	// Asynchronous way => GOOD
 	crypto.pbkdf2('password', 'salt', 100000, 1024, 'sha512', () => {
 		console.log(Date.now() - start, 'Password encrypted');
 	});
