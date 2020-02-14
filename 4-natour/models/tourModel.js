@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+// const User = require('./../models/userModel');
 // const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
@@ -101,7 +102,9 @@ const tourSchema = new mongoose.Schema(
 				address: String,
 				description: String
 			}
-		]
+		],
+		// guides: Array // -> Embeded guides in tour
+		guides: [{ type: mongoose.Schema.ObjectId, ref: 'User' }]
 	},
 	{
 		toJSON: { virtuals: true },
@@ -130,6 +133,15 @@ tourSchema.pre('save', function(next) {
 	this.slug = slugify(this.name, { lower: true });
 	next();
 });
+
+// How could I embeded guides in tour.
+// tourSchema.pre('save', async function(next) {
+// 	const guidesPromises = this.guides.map(async id => await User.findById(id));
+// 	// Result of async id => await User.findById(id) is a promise.
+
+// 	this.guides = await Promise.all(guidesPromises);
+// 	next();
+// });
 
 // tourSchema.pre('save', function(next) {
 // 	console.log('Will save document');
@@ -163,7 +175,7 @@ tourSchema.pre(/^find/, function(next) {
 });
 
 tourSchema.post(/^find/, function(document, next) {
-	// console.log(`Query took ${Date.now() - this.start} miliseconds!`);
+	console.log(`Query took ${Date.now() - this.start} miliseconds!`);
 	// console.log(document);
 	next();
 });
