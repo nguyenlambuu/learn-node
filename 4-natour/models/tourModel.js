@@ -117,6 +117,13 @@ tourSchema.virtual('durationWeeks').get(function() {
 	return this.duration / 7;
 });
 
+// Virtual populate reviews
+tourSchema.virtual('reviews', {
+	ref: 'Review', // The Model this points to
+	foreignField: 'tour', // The field within that model
+	localField: '_id' // The corresponding field within the parent model (the tour's ID in this case)
+});
+
 // 4️⃣types middlewares in mongoDB are DOCUMENT, QUERY, AGGREGATE and MODEL
 
 /**
