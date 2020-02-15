@@ -174,6 +174,15 @@ tourSchema.pre(/^find/, function(next) {
 	next();
 });
 
+// Populate fields when find
+tourSchema.pre(/^find/, function(next) {
+	this.populate({
+		path: 'guides',
+		select: '-__v -passwordChangedAt'
+	});
+	next();
+});
+
 tourSchema.post(/^find/, function(document, next) {
 	console.log(`Query took ${Date.now() - this.start} miliseconds!`);
 	// console.log(document);
