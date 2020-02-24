@@ -23,6 +23,9 @@ const reviewSchema = new mongoose.Schema(
 	}
 );
 
+// User cannot create multiple reviews for the same tour.
+reviewSchema.indexes({ tour: 1, user: 1 }, { unique: true });
+
 reviewSchema.pre(/^find/, function(next) {
 	// this.populate({
 	// 		path: 'tour',
