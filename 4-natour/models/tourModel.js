@@ -112,6 +112,9 @@ const tourSchema = new mongoose.Schema(
 	}
 );
 
+tourSchema.indexes({ price: 1, ratingsAverage: -1 });
+tourSchema.indexes({ slug: 1 });
+
 // Virtual property is not really save into database, but user can query it
 tourSchema.virtual('durationWeeks').get(function() {
 	return this.duration / 7;
