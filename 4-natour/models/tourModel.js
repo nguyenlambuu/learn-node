@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+// const User = require('./../models/userModel');
 // const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
@@ -35,7 +36,8 @@ const tourSchema = new mongoose.Schema(
 			type: Number,
 			default: 4.5,
 			min: [1, 'Rating must be above 1.0'],
-			max: [5, 'Rating must be below 5.0']
+			max: [5, 'Rating must be below 5.0'],
+			set: val => Math.round(val * 10) / 10 // 4.666667, 46.66666, 47, 4.7
 		},
 		ratingsQuantity: {
 			type: Number,
@@ -77,7 +79,33 @@ const tourSchema = new mongoose.Schema(
 		secretTour: {
 			type: Boolean,
 			default: false
-		}
+		},
+		startLocation: {
+			// GeoJSON
+			type: {
+				type: String,
+				default: 'Point',
+				enum: ['Point']
+			},
+			coordinates: [Number], // [Longtitude, Latitude]
+			address: String,
+			description: String
+		},
+		locations: [
+			// Array of locations
+			{
+				type: {
+					type: String,
+					default: 'Point',
+					enum: ['Point']
+				},
+				coordinates: [Number],
+				address: String,
+				description: String
+			}
+		],
+		// guides: Array // -> Embeded guides in tour
+		guides: [{ type: mongoose.Schema.ObjectId, ref: 'User' }]
 	},
 	{
 		toJSON: { virtuals: true },
@@ -85,9 +113,20 @@ const tourSchema = new mongoose.Schema(
 	}
 );
 
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
+
 // Virtual property is not really save into database, but user can query it
 tourSchema.virtual('durationWeeks').get(function() {
 	return this.duration / 7;
+});
+
+// Virtual populate reviews
+tourSchema.virtual('reviews', {
+	ref: 'Review', // The Model this points to
+	foreignField: 'tour', // The field within that model
+	localField: '_id' // The corresponding field within the parent model (the tour's ID in this case)
 });
 
 // 4️⃣types middlewares in mongoDB are DOCUMENT, QUERY, AGGREGATE and MODEL
@@ -106,6 +145,15 @@ tourSchema.pre('save', function(next) {
 	this.slug = slugify(this.name, { lower: true });
 	next();
 });
+
+// How could I embeded guides in tour.
+// tourSchema.pre('save', async function(next) {
+// 	const guidesPromises = this.guides.map(async id => await User.findById(id));
+// 	// Result of async id => await User.findById(id) is a promise.
+
+// 	this.guides = await Promise.all(guidesPromises);
+// 	next();
+// });
 
 // tourSchema.pre('save', function(next) {
 // 	console.log('Will save document');
@@ -138,8 +186,17 @@ tourSchema.pre(/^find/, function(next) {
 	next();
 });
 
+// Populate fields when find
+tourSchema.pre(/^find/, function(next) {
+	this.populate({
+		path: 'guides',
+		select: '-__v -passwordChangedAt'
+	});
+	next();
+});
+
 tourSchema.post(/^find/, function(document, next) {
-	// console.log(`Query took ${Date.now() - this.start} miliseconds!`);
+	console.log(`Query took ${Date.now() - this.start} miliseconds!`);
 	// console.log(document);
 	next();
 });
@@ -153,11 +210,11 @@ tourSchema.post(/^find/, function(document, next) {
  * It means find all tour which secretTour not secret
  * @this aggregate
  */
-tourSchema.pre('aggregate', function(next) {
-	this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
-	// console.log(this);
-	next();
-});
+// tourSchema.pre('aggregate', function(next) {
+// 	this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+// 	// console.log(this);
+// 	next();
+// });
 
 const Tour = mongoose.model('Tour', tourSchema);
 
