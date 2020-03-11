@@ -10,10 +10,16 @@ module.exports = class Email {
 		this.from = `Buu Lam Nguyen <h${process.env.EMAIL_FROM}>`;
 	}
 
-	createTransport() {
+	transport() {
 		if (process.env.NODE_ENV === 'production') {
 			// Sendgrid
-			return 1;
+			return nodemailer.createTransport({
+				service: 'SendGrid',
+				auth: {
+					user: process.env.EMAIL_SENDGRID_USERNAME,
+					pass: process.env.EMAIL_SENDGRID_PASSWORD
+				}
+			});
 		}
 
 		return nodemailer.createTransport({
@@ -47,10 +53,17 @@ module.exports = class Email {
 		};
 
 		// 3. Create a transport and send email
-		await this.createTransport().sendMail(emailOptions);
+		await this.transport().sendMail(emailOptions);
 	}
 
 	async sendWelcome() {
 		await this.send('welcome', 'Welcome to the Natours Family!');
+	}
+
+	async sendPasswordReset() {
+		await this.send(
+			'passwordReset',
+			'Your password reset token (valid for only 10 minutes)!'
+		);
 	}
 };
